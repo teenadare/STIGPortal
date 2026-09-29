@@ -1,0 +1,10 @@
+cci_id,cci_number,definition,nist_control,status
+00000000-0000-4000-8000-000000000009,CCI-000048,The information system displays an organization-defined system use notification message or banner before granting access.,AC-8 a,ACTIVE
+00000000-0000-4000-8000-00000000000a,CCI-000050,The information system retains the notification message or banner on the screen until users acknowledge the usage conditions.,AC-8 b,ACTIVE
+00000000-0000-4000-8000-00000000000b,CCI-000057,The information system initiates a session lock after an organization-defined time period of inactivity.,AC-11 a,ACTIVE
+00000000-0000-4000-8000-00000000000c,CCI-000068,The information system implements cryptographic mechanisms to protect the confidentiality of remote access sessions.,AC-17 (2),ACTIVE
+00000000-0000-4000-8000-00000000000d,CCI-000366,The organization implements the security configuration settings.,CM-6 b,ACTIVE
+00000000-0000-4000-8000-00000000000e,CCI-000765,The information system implements multifactor authentication for network access to privileged accounts.,IA-2 (1),ACTIVE
+00000000-0000-4000-8000-00000000000f,CCI-001184,The information system protects the authenticity of communications sessions.,SC-23,ACTIVE
+00000000-0000-4000-8000-000000000010,CCI-001849,The organization allocates audit record storage capacity in accordance with organization-defined audit record storage requirements.,AU-4,ACTIVE
+00000000-0000-4000-8000-000000000011,CCI-002418,The information system protects the confidentiality and/or integrity of transmitted information.,SC-8,ACTIVE

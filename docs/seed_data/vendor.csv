@@ -1,0 +1,4 @@
+vendor_id,vendor_name,vendor_code,vendor_org,active
+00000000-0000-4000-8000-000000000019,Omnissa,OMNISSA,Omnissa,true
+00000000-0000-4000-8000-00000000001c,SUSE,SUSE,Rancher,true
+00000000-0000-4000-8000-00000000001f,Adobe,ADOBE,Adobe,true

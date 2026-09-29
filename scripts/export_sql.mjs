@@ -1,0 +1,99 @@
+#!/usr/bin/env node
+// =============================================================================
+// Generate INSPECTABLE, hand-off-ready data artifacts from the single source of
+// truth (src/server/normalizedSeed.js). Produces:
+//   docs/seed.sql            - flat, readable INSERT statements (run after schema.sql)
+//   docs/seed_data/<t>.csv   - one CSV per table for non-SQL reviewers (Excel-friendly)
+//
+// No database and no extra dependencies required:  node scripts/export_sql.mjs
+// Uses deterministic UUIDs so regenerated files are stable and diff-friendly.
+// =============================================================================
+import { writeFileSync, mkdirSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { dirname, join } from 'node:path';
+import * as mock from '../src/data/mockData.js';
+import * as workflow from '../src/data/workflowData.js';
+import { buildRows, INSERT_ORDER } from '../src/server/normalizedSeed.js';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const DOCS = join(__dirname, '..', 'docs');
+const DATA = join(DOCS, 'seed_data');
+
+// Deterministic, valid-format UUID generator (stable across runs).
+function makeIdGen() {
+  let n = 0;
+  return () => `00000000-0000-4000-8000-${(++n).toString(16).padStart(12, '0')}`;
+}
+
+// ---- SQL literal formatting ----
+function sqlLit(v) {
+  if (v === null || v === undefined) return 'NULL';
+  if (typeof v === 'boolean') return v ? 'TRUE' : 'FALSE';
+  if (typeof v === 'number') return String(v);
+  return `'${String(v).replace(/'/g, "''")}'`;
+}
+
+// ---- CSV field formatting ----
+function csvField(v) {
+  if (v === null || v === undefined) return '';
+  const s = typeof v === 'boolean' ? (v ? 'true' : 'false') : String(v);
+  return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+}
+
+function main() {
+  const tables = buildRows({ mock, workflow, idGen: makeIdGen() });
+  mkdirSync(DATA, { recursive: true });
+
+  // -------- docs/seed.sql --------
+  const stamp = new Date().toISOString();
+  const lines = [
+    '-- =============================================================================',
+    '-- STIG Portal - SEED DATA (static, generated)',
+    `-- Generated: ${stamp}  by scripts/export_sql.mjs`,
+    '-- Source of truth: src/server/normalizedSeed.js (do not hand-edit this file)',
+    '--',
+    '-- HOW TO LOAD:',
+    '--   1) psql "$DATABASE_URL" -f docs/schema.sql     (create tables)',
+    '--   2) psql "$DATABASE_URL" -f docs/seed.sql        (this file - insert data)',
+    '--',
+    '-- UUIDs are deterministic for review stability. ON CONFLICT DO NOTHING makes',
+    '-- re-running safe (idempotent).',
+    '-- =============================================================================',
+    '',
+    'BEGIN;',
+    '',
+  ];
+  let total = 0;
+  for (const table of INSERT_ORDER) {
+    const rows = tables[table] || [];
+    lines.push(`-- ---------------------------------------------------------------------------`);
+    lines.push(`-- ${table}  (${rows.length} rows)`);
+    if (!rows.length) { lines.push('-- (no rows)', ''); continue; }
+    const cols = Object.keys(rows[0]);
+    lines.push(`INSERT INTO ${table} (${cols.join(', ')}) VALUES`);
+    const valueLines = rows.map((row) => '  (' + cols.map((c) => sqlLit(row[c])).join(', ') + ')');
+    lines.push(valueLines.join(',\n'));
+    lines.push('ON CONFLICT DO NOTHING;', '');
+    total += rows.length;
+  }
+  lines.push('COMMIT;', '');
+  writeFileSync(join(DOCS, 'seed.sql'), lines.join('\n'), 'utf8');
+
+  // -------- docs/seed_data/<table>.csv --------
+  const manifestRows = [];
+  for (const table of INSERT_ORDER) {
+    const rows = tables[table] || [];
+    if (!rows.length) { manifestRows.push([table, 0]); continue; }
+    const cols = Object.keys(rows[0]);
+    const csv = [cols.join(',')]
+      .concat(rows.map((row) => cols.map((c) => csvField(row[c])).join(',')))
+      .join('\n');
+    writeFileSync(join(DATA, `${table}.csv`), csv + '\n', 'utf8');
+    manifestRows.push([table, rows.length]);
+  }
+
+  console.log('Wrote docs/seed.sql  (' + total + ' rows across ' + INSERT_ORDER.length + ' tables)');
+  console.log('Wrote docs/seed_data/*.csv');
+  console.table(Object.fromEntries(manifestRows));
+}
+main();

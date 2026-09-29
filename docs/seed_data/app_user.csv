@@ -1,0 +1,9 @@
+user_id,username,display_name,initials,is_global,active
+00000000-0000-4000-8000-000000000001,David Shultz,David Shultz,DS,false,true
+00000000-0000-4000-8000-000000000002,Joe Vendor,Joe Vendor,JV,false,true
+00000000-0000-4000-8000-000000000003,Teena Brinkley,Teena Brinkley,TB,false,true
+00000000-0000-4000-8000-000000000004,PMRC,PMRC,PM,true,true
+00000000-0000-4000-8000-000000000005,Aaron Kegrreis,Aaron Kegrreis,AK,false,true
+00000000-0000-4000-8000-000000000006,Marcus Reilly,Marcus Reilly,MR,false,true
+00000000-0000-4000-8000-000000000007,Sam Whitfield,Sam Whitfield,SW,false,true
+00000000-0000-4000-8000-000000000008,Dana Okonkwo,Dana Okonkwo,DO,false,true

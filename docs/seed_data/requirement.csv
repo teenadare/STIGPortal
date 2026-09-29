@@ -1,0 +1,65 @@
+requirement_id,vendor_id,project_id,source_srg_requirement_id,srg_id,stig_id,ia_control,requirement_text,vul_discussion,status,check_text,fix_text,severity,mitigation,artifact_description,status_justification,notes,approval_status,current_revision,assigned_to,created_at,updated_at
+00000000-0000-4000-8000-000000000026,00000000-0000-4000-8000-000000000019,00000000-0000-4000-8000-00000000001b,00000000-0000-4000-8000-000000000014,SRG-OS-000023-VMM-000060,HRZN-8X-000010,AC-8,Omnissa Horizon Connection Server must display the Standard Mandatory DoD Notice and Consent Banner before granting access to the administrative console.,"Display of a standardized and approved use notification before granting access ensures privacy and security notification verbiage is consistent with applicable federal laws, Executive Orders, directives, policies, regulations, standards, and guidance.",INHERENTLY_MEETS,"Verify the Horizon Connection Server displays the DoD Notice and Consent Banner.
+
+1. Log in to the Horizon Console.
+2. Navigate to Settings >> Global Settings >> General Settings.
+3. Confirm 'Display a pre-login message' is enabled and contains the DoD banner text.
+
+If the banner is not displayed, this is a finding.","Configure the Horizon Connection Server pre-login banner.
+
+1. In the Horizon Console, go to Settings >> Global Settings >> General Settings >> Edit.
+2. Enable 'Display a pre-login message' and paste the approved DoD banner text.
+3. Click OK.",CAT_II,N/A — control is fully implemented via the Global Settings pre-login message.,Screenshot of Global Settings showing the enabled DoD pre-login banner text.,Banner text validated against the DoD standard verbiage on 2026-06-20.,Applies to all Connection Server replicas in the pod.,APPROVED,1,00000000-0000-4000-8000-000000000003,2026-06-24,2026-06-24
+00000000-0000-4000-8000-000000000027,00000000-0000-4000-8000-000000000019,00000000-0000-4000-8000-00000000001b,00000000-0000-4000-8000-000000000016,SRG-OS-000423-VMM-001700,HRZN-8X-000040,SC-8,Omnissa Horizon must protect the confidentiality of transmitted configuration and session data using TLS 1.2 or higher.,"Without protection of the transmission of information, confidentiality and integrity may be compromised because unprotected communications can be intercepted and either read or altered.",CONFIGURABLE,"Verify TLS configuration on the Connection Server.
+
+1. On the Connection Server, open locked.properties.
+2. Confirm 'secureProtocols.1=TLSv1.2' (or higher) and that older protocols are absent.
+
+$ type C:\Program Files\Omnissa\Horizon\Server\sslgateway\conf\locked.properties
+
+If TLS 1.2+ is not enforced, this is a finding.","Enforce TLS 1.2 on the Connection Server.
+
+1. Edit locked.properties.
+2. Add: secureProtocols.1=TLSv1.2
+           preferredSecureProtocol=TLSv1.2
+3. Restart the Horizon Connection Server service.",CAT_I,Interim: upstream load balancer terminates TLS 1.2 until server-level enforcement is verified.,Copy of locked.properties and SSL Labs scan output for the Connection Server FQDN.,Awaiting approver confirmation of scan artifact.,Coordinate restart window with the VDI operations team.,PENDING_APPROVAL,1,00000000-0000-4000-8000-000000000006,2026-06-24,2026-06-24
+00000000-0000-4000-8000-000000000028,00000000-0000-4000-8000-000000000019,00000000-0000-4000-8000-00000000001b,00000000-0000-4000-8000-000000000017,SRG-OS-000029-VMM-000110,HRZN-8X-000080,AC-11,Omnissa Horizon must terminate idle administrative sessions after 15 minutes of inactivity.,A session time-out lock is a temporary action taken when a user stops work and moves away from the immediate vicinity of the system but does not log out.,DOES_NOT_MEET,"Verify the Horizon Console session timeout.
+
+1. Navigate to Settings >> Global Settings >> General Settings.
+2. Confirm 'Console Session Timeout' is set to 15 minutes or less.
+
+If the timeout exceeds 15 minutes, this is a finding.","Set the Horizon Console session timeout.
+
+1. Settings >> Global Settings >> General Settings >> Edit.
+2. Set 'Console Session Timeout' to 15.
+3. Click OK.",CAT_II,None.,Screenshot of Global Settings showing the 15-minute console timeout.,Returned by approver — check text must reference the Forced Logoff setting for client sessions as well.,Split client-session timeout into a separate rule (HRZN-8X-000081).,RETURNED,1,00000000-0000-4000-8000-000000000003,2026-06-23,2026-06-23
+00000000-0000-4000-8000-000000000029,00000000-0000-4000-8000-000000000019,00000000-0000-4000-8000-00000000001b,,SRG-OS-000341-VMM-001220,HRZN-8X-000120,AU-4,Omnissa Horizon must allocate audit record storage capacity to retain at least one week of event logs.,"In order to ensure sufficient storage capacity for the audit logs, the application must be able to allocate audit record storage capacity.",DOES_NOT_MEET,"Verify event database retention.
+
+1. Navigate to Settings >> Event Configuration.
+2. Confirm 'Show events for' and log retention meet the one-week minimum.
+
+If retention is less than 7 days, this is a finding.",Configure the Horizon event database retention to a minimum of 7 days in Settings >> Event Configuration.,CAT_III,External syslog forwarding retains 90 days of events as a compensating control.,Event Configuration screenshot and syslog retention policy document.,Event DB currently retains 3 days — remediation planned.,Verify event DB disk sizing before submitting for review.,PENDING_APPROVAL,1,00000000-0000-4000-8000-000000000002,2026-06-21,2026-06-21
+00000000-0000-4000-8000-00000000002a,00000000-0000-4000-8000-000000000019,00000000-0000-4000-8000-00000000001b,00000000-0000-4000-8000-000000000015,SRG-OS-000105-VMM-000530,HRZN-8X-000170,IA-2,Omnissa Horizon must enforce multifactor authentication for administrative access to the Connection Server.,Multifactor authentication requires the use of two or more different factors to achieve authentication and significantly reduces the risk of credential compromise.,INHERENTLY_MEETS,"Verify MFA is enabled for the Horizon Console.
+
+1. Navigate to Settings >> Servers >> Connection Servers >> Authentication.
+2. Confirm a 2-factor authenticator (RADIUS or SAML) is configured and enforced for administrators.
+
+If MFA is not enforced, this is a finding.",Configure a 2-factor authenticator under Settings >> Servers >> Connection Servers >> Authentication and set enforcement to Required.,CAT_I,None.,Authentication configuration screenshot and IdP SAML metadata.,SAML MFA validated with the enterprise IdP on 2026-06-19.,SAML integration uses the enterprise PIV/CAC IdP.,APPROVED,1,00000000-0000-4000-8000-000000000007,2026-06-24,2026-06-24
+00000000-0000-4000-8000-00000000002b,00000000-0000-4000-8000-000000000019,00000000-0000-4000-8000-00000000001b,,SRG-OS-000480-VMM-002000,HRZN-8X-000230,CM-6,Omnissa Horizon Agent must disable clipboard redirection from the remote session to the client by default.,Uncontrolled clipboard redirection can be used to exfiltrate sensitive data from the virtual desktop to the endpoint.,CONFIGURABLE,"Verify the Horizon Agent clipboard policy.
+
+1. In the GPO, review VMware View Agent Configuration >> Clipboard redirection.
+2. Confirm redirection is set to 'Disabled' or 'Client to server only'.
+
+If clipboard redirection is enabled bidirectionally, this is a finding.",Set the Horizon Agent 'Configure clipboard redirection' policy to 'Disabled' or 'Client to server only' via GPO and apply to all desktop pools.,CAT_II,DLP endpoint agent monitors clipboard events as a compensating control.,GPO export showing the clipboard redirection setting.,Awaiting approver review of the GPO artifact.,Confirm the policy applies to instant-clone pools.,PENDING_APPROVAL,1,00000000-0000-4000-8000-000000000003,2026-06-23,2026-06-23
+00000000-0000-4000-8000-00000000002c,00000000-0000-4000-8000-000000000019,00000000-0000-4000-8000-00000000001b,00000000-0000-4000-8000-000000000018,SRG-OS-000250-VMM-000860,HRZN-8X-000300,SC-23,Omnissa Horizon must use FIPS 140-2 validated cryptographic modules for all encryption operations.,Use of weak or untested encryption algorithms undermines the purposes of using encryption to protect data.,DOES_NOT_MEET,"Verify FIPS mode is enabled during Horizon installation.
+
+1. Review the Connection Server installation configuration.
+2. Confirm 'Install in FIPS mode' was selected.
+
+If FIPS mode is not enabled, this is a finding.",Reinstall or reconfigure the Horizon Connection Server with FIPS mode enabled. Note: FIPS mode must be selected at install time.,CAT_II,None.,Installation log or registry export confirming FIPS mode.,FIPS mode was not selected at install; rebuild required.,FIPS mode selection is install-time only; plan for a rebuild if not set.,PENDING_APPROVAL,1,00000000-0000-4000-8000-000000000002,2026-06-20,2026-06-20
+00000000-0000-4000-8000-00000000002d,00000000-0000-4000-8000-000000000019,00000000-0000-4000-8000-00000000001b,,SRG-OS-000033-VMM-000140,HRZN-8X-000360,AC-17,Omnissa Horizon must encrypt all Blast Extreme remote display protocol sessions.,Remote access protocols that transmit unencrypted session data expose keystrokes and screen content to interception.,INHERENTLY_MEETS,"Verify Blast Secure Gateway is enabled.
+
+1. Navigate to Settings >> Servers >> Connection Servers >> Edit >> Connection Server Backup.
+2. Confirm 'Use Blast Secure Gateway for Blast connections to machine' is enabled.
+
+If disabled, this is a finding.",Enable the Blast Secure Gateway on each Connection Server so all Blast Extreme sessions are tunneled and encrypted.,CAT_II,None.,Connection Server settings screenshot showing Blast Secure Gateway enabled.,Validated on all replicas 2026-06-18.,Applies to external and internal connections.,APPROVED,1,00000000-0000-4000-8000-000000000006,2026-06-24,2026-06-24

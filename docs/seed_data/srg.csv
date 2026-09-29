@@ -1,0 +1,3 @@
+srg_id,parent_srg_id,srg_code,srg_name,srg_type,version,release,description,active
+00000000-0000-4000-8000-000000000012,,OS-SRG,Operating System SRG,CORE,V2R1,R1,Core Operating System Security Requirements Guide.,true
+00000000-0000-4000-8000-000000000013,00000000-0000-4000-8000-000000000012,VMM-SRG,Virtualization (VMM) SRG,DERIVED,V1R2,R2,Virtualization management requirements derived from the OS SRG.,true

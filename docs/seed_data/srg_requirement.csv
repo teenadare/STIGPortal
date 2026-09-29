@@ -1,0 +1,47 @@
+srg_requirement_id,srg_id,parent_srg_requirement_id,srg_requirement_code,requirement_text,discussion,check_text,fix_text,severity,default_ia_control,source_version
+00000000-0000-4000-8000-000000000014,00000000-0000-4000-8000-000000000013,,SRG-OS-000023-VMM-000060,The virtualization management server must display the Standard Mandatory DoD Notice and Consent Banner before granting access.,"Display of a standardized and approved use notification before granting access ensures privacy and security notification verbiage is consistent with applicable federal laws, Executive Orders, directives, policies, regulations, standards, and guidance.","Verify the Horizon Connection Server displays the DoD Notice and Consent Banner.
+
+1. Log in to the Horizon Console.
+2. Navigate to Settings >> Global Settings >> General Settings.
+3. Confirm 'Display a pre-login message' is enabled and contains the DoD banner text.
+
+If the banner is not displayed, this is a finding.","Configure the Horizon Connection Server pre-login banner.
+
+1. In the Horizon Console, go to Settings >> Global Settings >> General Settings >> Edit.
+2. Enable 'Display a pre-login message' and paste the approved DoD banner text.
+3. Click OK.",CAT_II,AC-8,V1R2
+00000000-0000-4000-8000-000000000015,00000000-0000-4000-8000-000000000013,,SRG-OS-000105-VMM-000530,The virtualization management server must use multifactor authentication for privileged accounts.,Multifactor authentication requires the use of two or more different factors to achieve authentication and significantly reduces the risk of credential compromise.,"Verify MFA is enabled for the Horizon Console.
+
+1. Navigate to Settings >> Servers >> Connection Servers >> Authentication.
+2. Confirm a 2-factor authenticator (RADIUS or SAML) is configured and enforced for administrators.
+
+If MFA is not enforced, this is a finding.",Configure a 2-factor authenticator under Settings >> Servers >> Connection Servers >> Authentication and set enforcement to Required.,CAT_I,IA-2,V1R2
+00000000-0000-4000-8000-000000000016,00000000-0000-4000-8000-000000000013,,SRG-OS-000423-VMM-001700,The virtualization management server must protect the confidentiality of transmitted information.,"Without protection of the transmission of information, confidentiality and integrity may be compromised because unprotected communications can be intercepted and either read or altered.","Verify TLS configuration on the Connection Server.
+
+1. On the Connection Server, open locked.properties.
+2. Confirm 'secureProtocols.1=TLSv1.2' (or higher) and that older protocols are absent.
+
+$ type C:\Program Files\Omnissa\Horizon\Server\sslgateway\conf\locked.properties
+
+If TLS 1.2+ is not enforced, this is a finding.","Enforce TLS 1.2 on the Connection Server.
+
+1. Edit locked.properties.
+2. Add: secureProtocols.1=TLSv1.2
+           preferredSecureProtocol=TLSv1.2
+3. Restart the Horizon Connection Server service.",CAT_I,SC-8,V1R2
+00000000-0000-4000-8000-000000000017,00000000-0000-4000-8000-000000000013,,SRG-OS-000029-VMM-000110,The virtualization management server must initiate a session lock after an inactivity period.,A session time-out lock is a temporary action taken when a user stops work and moves away from the immediate vicinity of the system but does not log out.,"Verify the Horizon Console session timeout.
+
+1. Navigate to Settings >> Global Settings >> General Settings.
+2. Confirm 'Console Session Timeout' is set to 15 minutes or less.
+
+If the timeout exceeds 15 minutes, this is a finding.","Set the Horizon Console session timeout.
+
+1. Settings >> Global Settings >> General Settings >> Edit.
+2. Set 'Console Session Timeout' to 15.
+3. Click OK.",CAT_II,AC-11,V1R2
+00000000-0000-4000-8000-000000000018,00000000-0000-4000-8000-000000000013,,SRG-OS-000250-VMM-000860,The virtualization management server must implement cryptographic mechanisms using FIPS-validated modules.,Use of weak or untested encryption algorithms undermines the purposes of using encryption to protect data.,"Verify FIPS mode is enabled during Horizon installation.
+
+1. Review the Connection Server installation configuration.
+2. Confirm 'Install in FIPS mode' was selected.
+
+If FIPS mode is not enabled, this is a finding.",Reinstall or reconfigure the Horizon Connection Server with FIPS mode enabled. Note: FIPS mode must be selected at install time.,CAT_II,SC-23,V1R2
