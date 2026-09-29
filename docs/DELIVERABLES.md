@@ -10,6 +10,7 @@ Everything is generated from a single source of truth
 | Artifact | For | What it is | How to use |
 |---|---|---|---|
 | `schema.sql` | DB / Infra / DBA | DDL only — tables, keys, indexes, views, RLS. Builds the database structure. | `psql "$DATABASE_URL" -f docs/schema.sql` |
+| `DATA_DICTIONARY.md` / `data_dictionary.csv` | DB / QA / Analysts | Column-level reference for every table: type, nullable, key (PK/FK/UQ), default, references, allowed values, description. | Read the `.md`; open the `.csv` in Excel. |
 | `seed.sql` | DB / QA | Static, readable `INSERT` statements for realistic test data (incl. `requirement_test` + SRG lineage). | Run **after** `schema.sql`: `psql "$DATABASE_URL" -f docs/seed.sql` |
 | `seed_data/*.csv` | Analysts / Business reviewers | One CSV per table — open in Excel/Sheets to eyeball the exact values. | Open the file. No SQL needed. |
 | `DATA_MODEL.md` | Architects | Maps each UI mock object to the normalized tables (gap analysis). | Read. |
@@ -30,7 +31,8 @@ The receiving team needs only PostgreSQL + `psql`. No app, no Node.
 Edit the source (`src/server/normalizedSeed.js` / `src/data/*`) then run:
 
 ```bash
-node scripts/export_sql.mjs      # rewrites docs/seed.sql + docs/seed_data/*.csv
+node scripts/export_sql.mjs             # rewrites docs/seed.sql + docs/seed_data/*.csv
+node scripts/gen_data_dictionary.mjs    # rewrites docs/DATA_DICTIONARY.md + docs/data_dictionary.csv
 ```
 
 UUIDs in the generated files are **deterministic**, so re-running produces stable,
