@@ -14,6 +14,7 @@ Everything is generated from a single source of truth
 | Artifact | For | What it is | How to use |
 |---|---|---|---|
 | `schema.sql` | DB / Infra / DBA | DDL only — tables, keys, indexes, views, RLS. Builds the database structure. | `psql "$DATABASE_URL" -f docs/schema.sql` |
+| `SCHEMA_GUIDE.md` | Everyone (onboarding) | Plain-language tour of every table: what it holds, how it relates to the others, and why it's needed. Best first read. | Read. |
 | `DATA_DICTIONARY.md` / `data_dictionary.csv` | DB / QA / Analysts | Column-level reference for every table: type, nullable, key (PK/FK/UQ), default, references, allowed values, description. | Read the `.md`; open the `.csv` in Excel. |
 | `comments.sql` | DB / DBA | `COMMENT ON TABLE/COLUMN` statements so the descriptions live inside PostgreSQL (visible in pgAdmin/DBeaver). | Run after `schema.sql`: `psql "$DATABASE_URL" -f docs/comments.sql` |
 | `seed.sql` | DB / QA | Static, readable `INSERT` statements for realistic test data (incl. `requirement_test` + SRG lineage). | Run **after** `schema.sql`: `psql "$DATABASE_URL" -f docs/seed.sql` |
