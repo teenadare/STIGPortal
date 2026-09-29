@@ -9,6 +9,7 @@ import { WORKFLOW_STAGES, teamMembers } from "@/data/repository";
 import { useApp } from "@/context/AppContext";
 import { StigComments, StigBadge } from "@/components/StigComments";
 import { cn } from "@/lib/utils";
+import { Kpi } from "@/pages/senior-review/Kpi";
 
 const segCls = (active) => cn("rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors duration-150", active ? "border-[var(--brand)] bg-[var(--brand)]/10 text-[var(--brand)]" : "border-[var(--border-c)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]");
 
@@ -48,18 +49,6 @@ const SENIOR_ACTION = {
   pmrc: { label: "Approve for Delivery", kind: "deliver" },
   delivered: null,
 };
-
-function Kpi({ testid, icon: Icon, label, value, accent }) {
-  return (
-    <div data-testid={testid} className={cn("rounded-2xl border p-5 relative overflow-hidden", accent ? "border-[var(--brand)]/40 bg-gradient-to-br from-[var(--brand)]/15 to-transparent" : "border-[var(--border-c)] bg-[var(--surface)]")}>
-      <div className="flex items-center justify-between">
-        <span className="text-[11px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">{label}</span>
-        <Icon className={cn("h-4 w-4", accent ? "text-[var(--brand)]" : "text-[var(--text-muted)]")} />
-      </div>
-      <p className={cn("mt-3 text-3xl font-bold tabular-nums", accent ? "text-[var(--brand)]" : "text-[var(--text-primary)]")}>{value}</p>
-    </div>
-  );
-}
 
 export default function SeniorReviewDashboard() {
   const navigate = useNavigate();

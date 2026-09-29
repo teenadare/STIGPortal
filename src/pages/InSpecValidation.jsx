@@ -4,20 +4,11 @@ import { toast } from "sonner";
 import { ArrowLeft, FlaskConical, Play, Terminal, ServerCog } from "lucide-react";
 import { Card } from "@/components/Primitives";
 import { requirements } from "@/data/repository";
+import { Field } from "@/pages/inspec/InSpecField";
 
 const inputCls =
   "w-full rounded-lg bg-[var(--bg-primary)] border border-[var(--border-c)] px-3 py-2 text-sm text-[var(--text-primary)] focus:outline-none focus:border-[var(--brand)] transition-colors duration-150";
 const monoArea = inputCls + " font-mono text-xs resize-none";
-
-function Field({ label, hint, children }) {
-  return (
-    <div>
-      <label className="block text-[11px] font-semibold uppercase tracking-wider text-[var(--text-muted)] mb-1.5">{label}</label>
-      {children}
-      {hint && <p className="mt-1 text-[10px] text-[var(--text-muted)]">{hint}</p>}
-    </div>
-  );
-}
 
 export default function InSpecValidation() {
   const navigate = useNavigate();

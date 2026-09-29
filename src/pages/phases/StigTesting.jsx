@@ -12,13 +12,11 @@ import { ParentSrgFilter } from "@/components/ParentSrgFilter";
 import { ColumnMenu } from "@/components/ColumnMenu";
 import { SeniorFlag } from "@/components/Badges";
 import { cn } from "@/lib/utils";
+import { YN } from "@/pages/phases/stig-testing/YN";
 
 // Columns that expose an Excel-style sort/filter header menu.
 const FILTER_COLS = ["cci", "srg", "stigId", "title", "status", "check", "fix", "severity", "srgReq", "testSteps", "securityFeatureMet", "checkValid", "fixValid", "comments", "satisfies", "satisfiedBy"];
 
-const YN = ({ v }) => (
-  <span className={`font-mono text-xs font-semibold ${v === "Y" ? "text-emerald-500" : "text-red-500"}`}>{v}</span>
-);
 const clamp = "block max-w-[220px] line-clamp-2 text-xs text-[var(--text-secondary)]";
 
 export default function StigTesting() {

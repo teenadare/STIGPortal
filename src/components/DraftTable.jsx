@@ -1,140 +1,19 @@
 import { useMemo, useState, useRef, useEffect, Fragment } from "react";
-import { createPortal } from "react-dom";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
-import { Search, Layers, ChevronDown, Filter as FilterIcon, ArrowDownAZ, ArrowUpAZ, Check, X, Plus } from "lucide-react";
+import { Search, Layers, ChevronDown, Plus } from "lucide-react";
 import { Card } from "@/components/Primitives";
 import { SeniorFlag } from "@/components/Badges";
-import { SEVERITIES, STATUSES, GROUP_BY_OPTIONS } from "@/data/repository";
+import { GROUP_BY_OPTIONS } from "@/data/repository";
 import { useApp } from "@/context/AppContext";
 import { useSelection, BulkBar, DuplicateModal } from "@/components/BulkActions";
 import { FindReplace, TEXT_FIELDS } from "@/components/FindReplace";
 import { cn } from "@/lib/utils";
-
-const editCls =
-  "w-full rounded-md border border-[var(--brand)]/50 bg-[var(--bg-primary)] px-2 py-1 text-xs text-[var(--text-primary)] focus:outline-none focus:border-[var(--brand)]";
-
-function txtCls(mono, nowrap) {
-  return cn("block text-xs text-[var(--text-secondary)]", nowrap ? "whitespace-nowrap truncate" : "line-clamp-2", mono && "font-mono");
-}
-
-function TextCell({ sel, value, onChange, mono, nowrap }) {
-  if (!sel) return <span className={txtCls(mono, nowrap)}>{value || "—"}</span>;
-  return <input value={value || ""} onChange={(e) => onChange(e.target.value)} className={cn(editCls, mono && "font-mono")} />;
-}
-
-function SelectCell({ sel, value, options, onChange }) {
-  if (!sel) return <span className="text-xs text-[var(--text-primary)] whitespace-nowrap">{value || "—"}</span>;
-  return (
-    <select value={value} onChange={(e) => onChange(e.target.value)} className={editCls}>
-      {options.map((o) => <option key={o} value={o}>{o || "(blank)"}</option>)}
-    </select>
-  );
-}
-
-const COLS = [
-  { key: "cci", label: "CCI", w: 100, mono: true, readonly: true, wrap: true },
-  { key: "iaControl", label: "IA Control", w: 120, mono: true, readonly: true },
-  { key: "srg", label: "SRG ID", w: 190, mono: true },
-  { key: "stigId", label: "STIG ID", w: 150, mono: true, nowrap: true },
-  { key: "severity", label: "Severity", w: 120, select: SEVERITIES },
-  { key: "title", label: "Requirement", w: 280 },
-  { key: "discussion", label: "Vuln Discussion", w: 240 },
-  { key: "status", label: "Status", w: 200, select: STATUSES },
-  { key: "check", label: "Check", w: 220, mono: true },
-  { key: "fix", label: "Fix", w: 220, mono: true },
-  { key: "statusJustification", label: "Status Justification", w: 220 },
-  { key: "mitigation", label: "Mitigation", w: 200 },
-  { key: "artifactDescription", label: "Artifact Description", w: 220 },
-  { key: "comments", label: "Comments", w: 200 },
-];
-
-const CHECKBOX_W = 44;
-const cciText = (r) => (Array.isArray(r.cci) ? r.cci.join(", ") : r.cci || "");
-const getVal = (r, key) => (key === "cci" ? cciText(r) : r[key] ?? "");
-
-function useColumnWidths(cols) {
-  const [widths, setWidths] = useState(cols.map((c) => c.w));
-  const startResize = (i) => (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    const startX = e.clientX;
-    const startW = widths[i];
-    const move = (ev) => {
-      const next = Math.max(80, startW + (ev.clientX - startX));
-      setWidths((prev) => { const n = [...prev]; n[i] = next; return n; });
-    };
-    const up = () => { window.removeEventListener("mousemove", move); window.removeEventListener("mouseup", up); };
-    window.addEventListener("mousemove", move);
-    window.addEventListener("mouseup", up);
-  };
-  return [widths, startResize];
-}
-
-// Excel-style header menu: sort + searchable value checklist. Rendered in a portal to avoid clipping.
-function ColumnMenu({ colKey, values, sortDir, onSort, allowed, onToggle, onSetAll, onClear, active }) {
-  const [open, setOpen] = useState(false);
-  const [q, setQ] = useState("");
-  const [pos, setPos] = useState({ x: 0, y: 0 });
-  const btnRef = useRef(null);
-  const menuRef = useRef(null);
-
-  useEffect(() => {
-    if (!open) return;
-    const h = (e) => {
-      if (!menuRef.current?.contains(e.target) && !btnRef.current?.contains(e.target)) setOpen(false);
-    };
-    window.addEventListener("mousedown", h);
-    return () => window.removeEventListener("mousedown", h);
-  }, [open]);
-
-  const openMenu = (e) => {
-    e.stopPropagation();
-    const r = btnRef.current.getBoundingClientRect();
-    setPos({ x: Math.min(r.left, window.innerWidth - 260), y: r.bottom + 4 });
-    setOpen(true);
-  };
-
-  const shown = values.filter((v) => v.toLowerCase().includes(q.toLowerCase()));
-  const allChecked = allowed === null;
-
-  return (
-    <>
-      <button ref={btnRef} data-testid={`col-menu-${colKey}`} onClick={openMenu} className={cn("p-0.5 rounded hover:bg-[var(--surface-hover)]", (active || sortDir) && "text-[var(--brand)]")}>
-        <FilterIcon className="h-3 w-3" />
-      </button>
-      {open && createPortal(
-        <div ref={menuRef} style={{ position: "fixed", left: pos.x, top: pos.y, zIndex: 60, width: 240 }} className="rounded-lg border border-[var(--border-c)] bg-[var(--surface)] shadow-xl p-2 text-[var(--text-primary)]">
-          <div className="flex gap-1 mb-2">
-            <button data-testid={`col-sort-asc-${colKey}`} onClick={() => { onSort("asc"); setOpen(false); }} className={cn("flex-1 flex items-center justify-center gap-1 rounded-md border border-[var(--border-c)] px-2 py-1.5 text-xs hover:border-[var(--brand)]", sortDir === "asc" && "border-[var(--brand)] text-[var(--brand)]")}><ArrowDownAZ className="h-3.5 w-3.5" /> A → Z</button>
-            <button data-testid={`col-sort-desc-${colKey}`} onClick={() => { onSort("desc"); setOpen(false); }} className={cn("flex-1 flex items-center justify-center gap-1 rounded-md border border-[var(--border-c)] px-2 py-1.5 text-xs hover:border-[var(--brand)]", sortDir === "desc" && "border-[var(--brand)] text-[var(--brand)]")}><ArrowUpAZ className="h-3.5 w-3.5" /> Z → A</button>
-          </div>
-          <div className="relative mb-1.5">
-            <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[var(--text-muted)]" />
-            <input data-testid={`col-search-${colKey}`} value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search values…" className="w-full h-8 rounded-md border border-[var(--border-c)] bg-[var(--bg-primary)] pl-7 pr-2 text-xs focus:outline-none focus:border-[var(--brand)]" />
-          </div>
-          <label className="flex items-center gap-2 px-1 py-1 text-xs font-medium cursor-pointer">
-            <input type="checkbox" checked={allChecked} onChange={() => (allChecked ? onSetAll([]) : onClear())} className="accent-[var(--brand)]" /> (Select all)
-          </label>
-          <div className="max-h-48 overflow-y-auto">
-            {shown.map((v) => {
-              const on = allowed === null || allowed.includes(v);
-              return (
-                <label key={v} className="flex items-center gap-2 px-1 py-1 text-xs cursor-pointer hover:bg-[var(--surface-hover)] rounded">
-                  <input type="checkbox" checked={on} onChange={() => onToggle(v)} className="accent-[var(--brand)]" />
-                  <span className="truncate">{v || "(blank)"}</span>
-                </label>
-              );
-            })}
-            {shown.length === 0 && <p className="px-1 py-2 text-[11px] text-[var(--text-muted)]">No values</p>}
-          </div>
-          {active && <button onClick={() => { onClear(); }} className="mt-1.5 w-full flex items-center justify-center gap-1 rounded-md border border-[var(--border-c)] px-2 py-1 text-[11px] hover:border-[var(--brand)]"><X className="h-3 w-3" /> Clear filter</button>}
-        </div>,
-        document.body
-      )}
-    </>
-  );
-}
+import { COLS, CHECKBOX_W, cciText, getVal, editCls, txtCls } from "@/components/draft/cells";
+import { useColumnWidths } from "@/components/draft/useColumnWidths";
+import { TextCell } from "@/components/draft/TextCell";
+import { SelectCell } from "@/components/draft/SelectCell";
+import { ColumnMenu } from "@/components/draft/ColumnMenu";
 
 export default function DraftTable({ prefix, blankStigId, readOnly }) {
   const { reqs, updateReqs, flagDuplicates, hasSenior } = useApp();
