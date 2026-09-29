@@ -8,7 +8,7 @@
 CREATE EXTENSION IF NOT EXISTS pgcrypto;   -- gen_random_uuid()
 
 -- ------------------------------------------------------------------ IDENTITY
-CREATE TABLE app_user (
+CREATE TABLE IF NOT EXISTS app_user (
   user_id             UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   external_subject_id VARCHAR UNIQUE,          -- Keycloak JWT 'sub'
   username            VARCHAR NOT NULL,
@@ -21,7 +21,7 @@ CREATE TABLE app_user (
   updated_at          TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE TABLE vendor (
+CREATE TABLE IF NOT EXISTS vendor (
   vendor_id   UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   vendor_name VARCHAR NOT NULL,
   vendor_code VARCHAR UNIQUE NOT NULL,
@@ -35,7 +35,7 @@ CREATE TABLE vendor (
 -- access_role: vendor-scoped roles AUTHOR/REVIEWER/APPROVER/READ_ONLY/VENDOR_LEAD.
 -- [MOCKUP] government roles GOV_SME/PMRC/SENIOR_REVIEWER are cross-vendor:
 --   grant them with vendor_id = NULL to mean "all vendors" (see RLS note §RLS).
-CREATE TABLE user_vendor_access (
+CREATE TABLE IF NOT EXISTS user_vendor_access (
   user_vendor_access_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id     UUID NOT NULL REFERENCES app_user(user_id),
   vendor_id   UUID REFERENCES vendor(vendor_id),        -- NULL = global/government scope [MOCKUP]
@@ -50,7 +50,7 @@ CREATE TABLE user_vendor_access (
 );
 
 -- ------------------------------------------------------------- SRG HIERARCHY (shared reference)
-CREATE TABLE srg (
+CREATE TABLE IF NOT EXISTS srg (
   srg_id        UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   parent_srg_id UUID REFERENCES srg(srg_id),   -- NULL = Core SRG; else derived-from
   srg_code      VARCHAR UNIQUE NOT NULL,        -- e.g. 'Virtualization SRG'
@@ -62,7 +62,7 @@ CREATE TABLE srg (
   active        BOOLEAN NOT NULL DEFAULT true
 );
 
-CREATE TABLE srg_requirement (
+CREATE TABLE IF NOT EXISTS srg_requirement (
   srg_requirement_id        UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   srg_id                    UUID NOT NULL REFERENCES srg(srg_id),
   parent_srg_requirement_id UUID REFERENCES srg_requirement(srg_requirement_id),
@@ -77,7 +77,7 @@ CREATE TABLE srg_requirement (
 );
 
 -- ------------------------------------------------------------------- CCI (shared reference)
-CREATE TABLE cci (
+CREATE TABLE IF NOT EXISTS cci (
   cci_id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   cci_number       VARCHAR UNIQUE NOT NULL,     -- 'CCI-000048'
   definition       TEXT,
@@ -87,7 +87,7 @@ CREATE TABLE cci (
 );
 
 -- --------------------------------------------------------- VENDOR / PROJECT STRUCTURE
-CREATE TABLE product (
+CREATE TABLE IF NOT EXISTS product (
   product_id   UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   vendor_id    UUID NOT NULL REFERENCES vendor(vendor_id),
   product_name VARCHAR NOT NULL,
@@ -99,7 +99,7 @@ CREATE TABLE product (
 
 -- workflow_status aligned to the UI stage pipeline (WORKFLOW_STAGES).
 -- phase is the coarse tab the UI renders (PHASES).
-CREATE TABLE stig_project (
+CREATE TABLE IF NOT EXISTS stig_project (
   project_id        UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   vendor_id         UUID NOT NULL REFERENCES vendor(vendor_id),
   product_id        UUID NOT NULL REFERENCES product(product_id),
@@ -121,7 +121,7 @@ CREATE TABLE stig_project (
 );
 
 -- --------------------------------------------------------------- REQUIREMENT (STIG content)
-CREATE TABLE requirement (
+CREATE TABLE IF NOT EXISTS requirement (
   requirement_id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   vendor_id                 UUID NOT NULL REFERENCES vendor(vendor_id),
   project_id                UUID NOT NULL REFERENCES stig_project(project_id),
@@ -157,14 +157,14 @@ CREATE TABLE requirement (
   UNIQUE (project_id, stig_id)
 );
 
-CREATE TABLE requirement_cci (
+CREATE TABLE IF NOT EXISTS requirement_cci (
   requirement_id UUID NOT NULL REFERENCES requirement(requirement_id) ON DELETE CASCADE,
   cci_id         UUID NOT NULL REFERENCES cci(cci_id),
   PRIMARY KEY (requirement_id, cci_id)
 );
 
 -- Full-snapshot history of authoring content.
-CREATE TABLE requirement_revision (
+CREATE TABLE IF NOT EXISTS requirement_revision (
   revision_id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   requirement_id       UUID NOT NULL REFERENCES requirement(requirement_id),
   vendor_id            UUID NOT NULL REFERENCES vendor(vendor_id),
@@ -188,7 +188,7 @@ CREATE TABLE requirement_revision (
 
 -- [MOCKUP] Field-level change log powering the "Revision History" panel
 -- (field, from -> to). Complements full snapshots above.
-CREATE TABLE requirement_field_change (
+CREATE TABLE IF NOT EXISTS requirement_field_change (
   change_id      UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   requirement_id UUID NOT NULL REFERENCES requirement(requirement_id),
   vendor_id      UUID NOT NULL REFERENCES vendor(vendor_id),
@@ -199,7 +199,7 @@ CREATE TABLE requirement_field_change (
   changed_at     TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE TABLE comment (
+CREATE TABLE IF NOT EXISTS comment (
   comment_id     UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   vendor_id      UUID NOT NULL REFERENCES vendor(vendor_id),
   requirement_id UUID NOT NULL REFERENCES requirement(requirement_id),
@@ -211,7 +211,7 @@ CREATE TABLE comment (
   resolved_at    TIMESTAMPTZ
 );
 
-CREATE TABLE document (
+CREATE TABLE IF NOT EXISTS document (
   document_id   UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   vendor_id     UUID NOT NULL REFERENCES vendor(vendor_id),
   project_id    UUID REFERENCES stig_project(project_id),
@@ -226,7 +226,7 @@ CREATE TABLE document (
 );
 
 -- [MOCKUP] STIG Testing phase results (InSpec validation grid).
-CREATE TABLE requirement_test (
+CREATE TABLE IF NOT EXISTS requirement_test (
   test_id               UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   requirement_id        UUID NOT NULL REFERENCES requirement(requirement_id),
   vendor_id             UUID NOT NULL REFERENCES vendor(vendor_id),
@@ -240,7 +240,7 @@ CREATE TABLE requirement_test (
   tested_at             TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE TABLE audit_event (
+CREATE TABLE IF NOT EXISTS audit_event (
   audit_event_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   vendor_id      UUID REFERENCES vendor(vendor_id),
   user_id        UUID REFERENCES app_user(user_id),
@@ -256,28 +256,28 @@ CREATE TABLE audit_event (
 );
 
 -- --------------------------------------------------------------------- INDEXES
-CREATE INDEX ix_uva_user           ON user_vendor_access(user_id);
-CREATE INDEX ix_uva_vendor         ON user_vendor_access(vendor_id);
-CREATE INDEX ix_product_vendor     ON product(vendor_id);
-CREATE INDEX ix_project_vendor     ON stig_project(vendor_id);
-CREATE INDEX ix_project_product    ON stig_project(product_id);
-CREATE INDEX ix_req_vendor         ON requirement(vendor_id);
-CREATE INDEX ix_req_project        ON requirement(project_id);
-CREATE INDEX ix_req_srgreq         ON requirement(source_srg_requirement_id);
-CREATE INDEX ix_req_satisfiedby    ON requirement(satisfied_by_requirement_id);
-CREATE INDEX ix_reqcci_cci         ON requirement_cci(cci_id);
-CREATE INDEX ix_rev_req            ON requirement_revision(requirement_id);
-CREATE INDEX ix_change_req         ON requirement_field_change(requirement_id);
-CREATE INDEX ix_comment_req        ON comment(requirement_id);
-CREATE INDEX ix_doc_req            ON document(requirement_id);
-CREATE INDEX ix_test_req           ON requirement_test(requirement_id);
-CREATE INDEX ix_audit_vendor_ts    ON audit_event(vendor_id, ts DESC);
-CREATE INDEX ix_srgreq_srg         ON srg_requirement(srg_id);
+CREATE INDEX IF NOT EXISTS ix_uva_user           ON user_vendor_access(user_id);
+CREATE INDEX IF NOT EXISTS ix_uva_vendor         ON user_vendor_access(vendor_id);
+CREATE INDEX IF NOT EXISTS ix_product_vendor     ON product(vendor_id);
+CREATE INDEX IF NOT EXISTS ix_project_vendor     ON stig_project(vendor_id);
+CREATE INDEX IF NOT EXISTS ix_project_product    ON stig_project(product_id);
+CREATE INDEX IF NOT EXISTS ix_req_vendor         ON requirement(vendor_id);
+CREATE INDEX IF NOT EXISTS ix_req_project        ON requirement(project_id);
+CREATE INDEX IF NOT EXISTS ix_req_srgreq         ON requirement(source_srg_requirement_id);
+CREATE INDEX IF NOT EXISTS ix_req_satisfiedby    ON requirement(satisfied_by_requirement_id);
+CREATE INDEX IF NOT EXISTS ix_reqcci_cci         ON requirement_cci(cci_id);
+CREATE INDEX IF NOT EXISTS ix_rev_req            ON requirement_revision(requirement_id);
+CREATE INDEX IF NOT EXISTS ix_change_req         ON requirement_field_change(requirement_id);
+CREATE INDEX IF NOT EXISTS ix_comment_req        ON comment(requirement_id);
+CREATE INDEX IF NOT EXISTS ix_doc_req            ON document(requirement_id);
+CREATE INDEX IF NOT EXISTS ix_test_req           ON requirement_test(requirement_id);
+CREATE INDEX IF NOT EXISTS ix_audit_vendor_ts    ON audit_event(vendor_id, ts DESC);
+CREATE INDEX IF NOT EXISTS ix_srgreq_srg         ON srg_requirement(srg_id);
 
 -- --------------------------------------------------- DERIVED PROJECT ROLLUPS (views)
 -- The UI dashboard shows progress %, CAT I/II/III counts and an approval breakdown.
 -- These are computed, not stored.
-CREATE VIEW v_project_rollup AS
+CREATE OR REPLACE VIEW v_project_rollup AS
 SELECT p.project_id,
        COUNT(r.*)                                                   AS total,
        COUNT(*) FILTER (WHERE r.severity='CAT_I')                   AS cat_i,
@@ -296,6 +296,7 @@ GROUP BY p.project_id;
 -- Enable per vendor-owned table; government (is_global) users set app.vendor_id
 -- per request as they act on a specific vendor's project.
 ALTER TABLE requirement ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS requirement_vendor_isolation ON requirement;
 CREATE POLICY requirement_vendor_isolation ON requirement
   USING (vendor_id = current_setting('app.vendor_id', true)::uuid);
 -- Repeat ENABLE + POLICY for: product, stig_project, requirement_revision,

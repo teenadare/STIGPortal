@@ -92,14 +92,14 @@ via `source_srg_requirement_id`); `iaControl`→`ia_control`; `cci[]`→`require
 ---
 ## 6. Suggestions to make ingestion easy for the developers
 1. **Run the DDL as migration `V1__core.sql`** (Flyway/Liquibase). It is idempotent-friendly and self-contained.
-2. **Seed from the mock-up automatically** — the mock data already lives in `src/data/*.js` and
-   is exposed at `/api/requirements`, `/api/projects`, `/api/ccis`, `/api/srg-tree`, `/api/audit-log`.
-   A short ETL can `GET` those endpoints and `INSERT` into the tables (field map in §5) to get a
-   realistic, populated dev database on day one.
+2. **Seed from the mock-up automatically** — the artifacts in `docs/` do this for you.
+   Run `docs/schema.sql` then `docs/seed.sql` (static, reviewable), or
+   `DATABASE_URL=… node scripts/seed_postgres.mjs` to build + load in one step. Field map in §5;
+   see `docs/DELIVERABLES.md` for the full package.
 3. **The API contract is already written** — `src/services/stigService.js` + `app/api/[[...path]]/route.js`
    define request/response shapes. Point them at Postgres by setting `DATABASE_URL` (see `BACKEND.md`);
-   `src/server/pgStore.js` already creates a JSONB-backed schema — treat `docs/schema.sql` as the
-   normalized target it migrates toward.
+   `src/server/pgStore.js` reads/writes the **normalized** tables defined in `docs/schema.sql`
+   directly (no JSONB blob) and shapes rows back into the UI/API object shape.
 4. **Keep rollups as views** (`v_project_rollup`) so dashboard numbers can never drift from the rows.
 5. **Resolve three status axes early** (§3) — the single biggest source of confusion; they are separate columns.
 6. **Decide the government-access model up front** (§2 #8). Recommended: `vendor_id NULL = all vendors`

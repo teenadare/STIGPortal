@@ -75,7 +75,7 @@ for (let i = 0; i < lines.length; i++) {
   const commentPart = raw.includes('--') ? raw.slice(raw.indexOf('--') + 2).trim() : '';
 
   if (!cur) {
-    const t = codePart.match(/^\s*CREATE TABLE\s+([a-z_]+)\s*\(/i);
+    const t = codePart.match(/^\s*CREATE TABLE\s+(?:IF NOT EXISTS\s+)?([a-z_]+)\s*\(/i);
     if (t) {
       const desc = pendingComments.filter((c) => !isDashOnly(c)).join(' ').replace(/^[-\s]+/, '').trim();
       cur = { name: t[1], description: desc, codeBuf: '', pendingCol: '', pendingComment: '' };
@@ -155,6 +155,25 @@ for (const t of tables) {
 }
 writeFileSync(join(DOCS, 'data_dictionary.csv'), csv.join('\n') + '\n', 'utf8');
 
-console.log(`Wrote docs/DATA_DICTIONARY.md and docs/data_dictionary.csv`);
+// ---- Emit COMMENT ON statements (persist descriptions into PostgreSQL) ----
+const sqlStr = (s) => `'${String(s).replace(/'/g, "''")}'`;
+const com = [
+  '-- =============================================================================',
+  '-- STIG Portal - COMMENT ON statements (table & column descriptions)',
+  '-- Generated from docs/schema.sql by scripts/gen_data_dictionary.mjs.',
+  '-- Run AFTER schema.sql:  psql "$DATABASE_URL" -f docs/comments.sql',
+  '-- =============================================================================',
+  '',
+];
+for (const t of tables) {
+  if (t.description) com.push(`COMMENT ON TABLE ${t.name} IS ${sqlStr(t.description)};`);
+  for (const c of t.columns) {
+    if (c.description) com.push(`COMMENT ON COLUMN ${t.name}.${c.column} IS ${sqlStr(c.description)};`);
+  }
+  com.push('');
+}
+writeFileSync(join(DOCS, 'comments.sql'), com.join('\n'), 'utf8');
+
+console.log(`Wrote docs/DATA_DICTIONARY.md, docs/data_dictionary.csv and docs/comments.sql`);
 console.log(`Tables: ${tables.length}`);
 console.table(Object.fromEntries(tables.map((t) => [t.name, t.columns.length])));

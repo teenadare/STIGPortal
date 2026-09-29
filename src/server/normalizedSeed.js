@@ -18,6 +18,15 @@ export const STATUS_FROM_DB = {
 export const APPROVAL_TO_DB = { Approved: 'APPROVED', 'Pending Approval': 'PENDING_APPROVAL', Returned: 'RETURNED' };
 export const APPROVAL_FROM_DB = { APPROVED: 'Approved', PENDING_APPROVAL: 'Pending Approval', RETURNED: 'Returned' };
 
+// Project display status (mock) -> pipeline workflow_status enum, and the coarse
+// phase each stage sits in. Documented assumption for seeding (mock projects only
+// carry a display status, not an explicit pipeline stage).
+export const PROJ_STATUS_TO_WF = { Draft: 'VENDOR_PROGRESS', 'Under Review': 'READY_PMRC', 'Needs Revision': 'VENDOR_READY' };
+export const WF_TO_PHASE = {
+  VENDOR_PROGRESS: 'VENDOR_DRAFT', VENDOR_READY: 'VENDOR_DRAFT', READY_TESTING: 'STIG_TESTING',
+  READY_TECHEDIT: 'TECH_EDITS', READY_PMRC: 'STIG_DRAFT', PMRC: 'DELIVERY', DELIVERED: 'DELIVERY',
+};
+
 // Insert order respects FK dependencies.
 export const INSERT_ORDER = [
   'vendor', 'app_user', 'product', 'srg', 'srg_requirement', 'cci',
@@ -85,7 +94,8 @@ export function buildRows({ mock, workflow, idGen }) {
     const vId = ensureVendor(p.vendor, p.vendorOrg);
     const pdId = ensureProduct(vId, p.product);
     const id = uuid(); projId[p.id] = id;
-    t.stig_project.push({ project_id: id, vendor_id: vId, product_id: pdId, source_srg_id: coreSrg, project_name: p.name, stig_version: p.version, assigned_writer: ensureUser(p.lead), created_at: p.updated, updated_at: p.updated });
+    const wf = PROJ_STATUS_TO_WF[p.status] || 'VENDOR_PROGRESS';
+    t.stig_project.push({ project_id: id, vendor_id: vId, product_id: pdId, source_srg_id: coreSrg, project_name: p.name, stig_version: p.version, workflow_status: wf, phase: WF_TO_PHASE[wf] || 'VENDOR_DRAFT', assigned_writer: ensureUser(p.lead), created_at: p.updated, updated_at: p.updated });
   });
 
   // Requirements (mock attaches all to the Horizon project)

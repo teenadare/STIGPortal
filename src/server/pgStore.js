@@ -20,8 +20,13 @@ import {
 let ready = null;
 
 async function ensureSchemaAndSeed() {
-  const ddl = readFileSync(join(process.cwd(), 'docs', 'schema.sql'), 'utf8');
-  await query(ddl);
+  // Only apply the DDL if the schema is not present yet (schema.sql is now
+  // idempotent, but this avoids re-running the full script on every cold start).
+  const { rows: reg } = await query("SELECT to_regclass('public.requirement') AS t");
+  if (!reg[0].t) {
+    const ddl = readFileSync(join(process.cwd(), 'docs', 'schema.sql'), 'utf8');
+    await query(ddl);
+  }
   const { rows } = await query('SELECT COUNT(*)::int AS n FROM requirement');
   if (rows[0].n > 0) return;
   const tables = buildRows({ mock, workflow });

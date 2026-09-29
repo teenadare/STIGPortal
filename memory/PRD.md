@@ -57,3 +57,16 @@ src/                        # @/* alias -> ./src/*  (all app logic lives here)
 - All screens render; role switcher, phase tabs, sidebar, light/dark theme, project cards,
   requirements grid, and the requirement editor (incl. deep-link `/requirements/:stigId`) verified.
 - Client-side navigation + in-memory state persistence working.
+
+## DB deliverables hand-off package (docs/)
+Single source of truth: `src/server/normalizedSeed.js`. Generators (no DB, no deps):
+`scripts/export_sql.mjs` (→ `seed.sql`, `seed_data/*.csv`, auto-updates DELIVERABLES row counts)
+and `scripts/gen_data_dictionary.mjs` (→ `DATA_DICTIONARY.md`, `data_dictionary.csv`, `comments.sql`).
+- `docs/schema.sql` — DDL, now **idempotent** (`IF NOT EXISTS` / `OR REPLACE` / `DROP POLICY IF EXISTS`).
+- `docs/seed.sql` + `docs/seed_data/*.csv` — static, reviewable seed (incl. `requirement_test` +
+  CORE→DERIVED SRG lineage; projects seeded with `workflow_status`/`phase`).
+- `docs/DATA_DICTIONARY.md` / `.csv` + `docs/comments.sql` — column-level metadata.
+- `docs/DELIVERABLES.md` — manifest (audience per artifact, 2-command build, synthetic-data note).
+- `src/server/pgStore.js` — applies DDL only when schema absent (`to_regclass`), so live Postgres
+  survives app restarts.
+
